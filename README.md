@@ -26,10 +26,11 @@ In your project's Gruntfile, add a section named `deadlink` to the data object p
 grunt.initConfig({
   deadlink: {
     options: {
-      // Task-specific options go here.
+      expressions: [...] // regular expression to take a link. default is markdown.
     },
     your_target: {
-      // Target-specific file lists and/or options go here.
+      src: [...]         // grunt file expand syntax. files path for testing.
+      expressions: [...] // regular expression to recognize a link. default is markdown. It has high priority then options.
     },
   },
 })
@@ -37,53 +38,20 @@ grunt.initConfig({
 
 ### Options
 
-#### options.separator
-Type: `String`
-Default value: `',  '`
+#### target.src
+- `Required`
+- Type : `String/Array`
 
-A string value that is used to do something with whatever.
+grunt file expand syntax.i It indicate files that include links for testing it is dead or not.
 
-#### options.punctuation
-Type: `String`
-Default value: `'.'`
+#### target.expressions
+- `Optional`
+- Type: `Array of RegExp object`
+- Default value: [ /\[[^\]]*\]\((http[s]?:\/\/[^\) ]+)/g, /\[[^\]]*\]\s*:\s*(http[s]?:\/\/.*)/g ]
 
-A string value that is used to do something else with whatever else.
+regular expression to recognize a link. default is markdown. It has high priority then options.
 
-### Usage Examples
-
-#### Default Options
-In this example, the default options are used to do something with whatever. So if the `testing` file has the content `Testing` and the `123` file had the content `1 2 3`, the generated result would be `Testing, 1 2 3.`
-
-```js
-grunt.initConfig({
-  deadlink: {
-    options: {},
-    files: {
-      'dest/default_options': ['src/testing', 'src/123'],
-    },
-  },
-})
-```
-
-#### Custom Options
-In this example, custom options are used to do something else with whatever else. So if the `testing` file has the content `Testing` and the `123` file had the content `1 2 3`, the generated result in this case would be `Testing: 1 2 3 !!!`
-
-```js
-grunt.initConfig({
-  deadlink: {
-    options: {
-      separator: ': ',
-      punctuation: ' !!!',
-    },
-    files: {
-      'dest/default_options': ['src/testing', 'src/123'],
-    },
-  },
-})
-```
 
 ## Contributing
 In lieu of a formal styleguide, take care to maintain the existing coding style. Add unit tests for any new or changed functionality. Lint and test your code using [Grunt](http://gruntjs.com/).
 
-## Release History
-_(Nothing yet)_
