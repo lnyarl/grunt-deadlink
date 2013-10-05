@@ -23,5 +23,6 @@ module.exports = (grunt) ->
 
   grunt.loadNpmTasks 'grunt-contrib-jshint'
   grunt.loadNpmTasks 'grunt-contrib-clean'
+  grunt.loadNpmTasks 'grunt-contrib-coffee'
 
   grunt.registerTask 'default', ['clean', 'coffee']

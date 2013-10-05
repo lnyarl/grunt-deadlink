@@ -13,21 +13,46 @@ module.exports = (grunt) ->
   util = (require './util')(grunt)
   _ = grunt.util._
 
-  grunt.registerMultiTask('deadlink', 'check dead links in files.', ()->
+  grunt.registerMultiTask 'deadlink', 'check dead links in files.', ->
     done = @async()
 
-    options = this.options
+    options = @options
       # this expression can changed to recognizing other url format.
       # eg. markdown, wiki syntax, html
       # markdown is default
       expressions: [
-                   /\[[^\]]*\]\((http[s]?:\/\/[^\) ]+)/g, #[...](<url>)
-                   /\[[^\]]*\]\s*:\s*(http[s]?:\/\/.*)/g  #[...]: <url>
-                   ]
+        /\[[^\]]*\]\((http[s]?:\/\/[^\) ]+)/g, #[...](<url>)
+        /\[[^\]]*\]\s*:\s*(http[s]?:\/\/.*)/g  #[...]: <url>
+      ]
 
     files = util.getFileList @data.src
     expressions = @data.expressions || options.expressions
     linksCount = okCount = failCount = 0
+    run = (link, retryCount) ->
+      option =
+        url : parseURL link
+        strictSSL : false
+        followRedirect : true
+        pool :
+          maxSockets : 10
+        maxAttempts : 3
+        retryDelay : 10000
+        timeout: 100000
+      time = if retryCount? then 0 else option.retryDelay
+      setTimeout ->
+        request option, (error, res, body) ->
+          if(res? and res.statusCode == 200)
+            okCount++
+          else if(error? and error.code == "ECONNREFUSED" and retryCount < option.maxAttempts)
+            grunt.log.error "#{link} is retring (#{retryCount})"
+            retryCount++
+            run(option, link, retryCount)
+          else
+            failCount++
+            msg = if error then JSON.stringify error else (""+res.statusCode)
+            grunt.log.error "#{link} is broken (#{msg})"
+        .setMaxListeners 25
+      , time
 
     _.forEach files, (filepath) ->
 
@@ -36,22 +61,7 @@ module.exports = (grunt) ->
       linksCount += links.length
 
       _.forEach links, (link) ->
-        setTimeout () ->
-          option =
-            method : 'HEAD'
-            url : parseURL link
-            strictSSL : false
-            pool :
-              maxSockets : 10
-
-          request option, (error, res, body) ->
-            if(res and res.statusCode == 200)
-              okCount++
-            else
-              failCount++
-              grunt.log.error "#{link} is broken (#{error ? JSON.stringify(error) : res.statusCode})"
-          .setMaxListeners 25
-        , 0
+        run link
 
     st = setInterval ->
       if(linksCount == (okCount + failCount))

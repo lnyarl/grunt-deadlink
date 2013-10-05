@@ -32,12 +32,13 @@
     "grunt-contrib-clean": "~0.4.0",
     "grunt-contrib-nodeunit": "~0.2.0",
     "grunt": "~0.4.1",
-    "request": "~2.27.0"
+    "request": "~2.27.0",
+    "grunt-contrib-coffee": "~0.7.0"
   },
   "peerDependencies": {
     "grunt": "~0.4.1"
   },
   "keywords": [
-    "gruntplugin"
+    "gruntplugin", "deadlink"
   ]
 }
