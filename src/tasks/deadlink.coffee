@@ -14,7 +14,7 @@ module.exports = (grunt) ->
   logger = (require './logger')(grunt)
   _ = grunt.util._
 
-  grunt.registerMultiTask 'deadlink', 'check dead links in files.', ->
+  grunt.registerMultiTask 'grunt-deadlink', 'check dead links in files.', ->
     done = @async()
 
     options = @options
