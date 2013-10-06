@@ -11,6 +11,7 @@ module.exports = (grunt) ->
   request = require 'request'
   parseURL = (require 'url').parse
   util = (require './util')(grunt)
+  logger = (require './logger')(grunt)
   _ = grunt.util._
 
   grunt.registerMultiTask 'deadlink', 'check dead links in files.', ->
@@ -24,33 +25,41 @@ module.exports = (grunt) ->
         /\[[^\]]*\]\((http[s]?:\/\/[^\) ]+)/g, #[...](<url>)
         /\[[^\]]*\]\s*:\s*(http[s]?:\/\/.*)/g  #[...]: <url>
       ]
+      maxAttempts : 3
+      retryDelay : 10000
+      toFile : false
+      logAll : false
 
+    logger.init options.toFile, options.logAll
     files = util.getFileList @data.src
     expressions = @data.expressions || options.expressions
     linksCount = okCount = failCount = 0
-    run = (link, retryCount) ->
+    allowdStatusCode = 200
+
+    run = (filepath, link, retryCount) ->
       option =
+        method : 'GET'
         url : parseURL link
         strictSSL : false
         followRedirect : true
         pool :
           maxSockets : 10
-        maxAttempts : 3
-        retryDelay : 10000
         timeout: 100000
-      time = if retryCount? then 0 else option.retryDelay
+
+      time = if retryCount? then 0 else options.retryDelay
       setTimeout ->
         request option, (error, res, body) ->
-          if(res? and res.statusCode == 200)
+          if(res? and res.statusCode == allowdStatusCode) # allowdStatusCode = 200
             okCount++
-          else if(error? and error.code == "ECONNREFUSED" and retryCount < option.maxAttempts)
-            grunt.log.error "#{link} is retring (#{retryCount})"
+            logger.ok "ok: #{link} at #{filepath}"
+          else if(error? and (error.code == "ECONNREFUSED" or error.code == "HPE_INVALID_CONSTANT") and retryCount < options.maxAttempts)
+            logger.error "retry: #{link} (#{retryCount}) at #{filepath}"
             retryCount++
-            run(option, link, retryCount)
+            run filepath, link, retryCount
           else
             failCount++
             msg = if error then JSON.stringify error else (""+res.statusCode)
-            grunt.log.error "#{link} is broken (#{msg})"
+            logger.error "broken: #{link} (#{msg}) at #{filepath}"
         .setMaxListeners 25
       , time
 
@@ -61,7 +70,7 @@ module.exports = (grunt) ->
       linksCount += links.length
 
       _.forEach links, (link) ->
-        run link
+        run filepath, link, 0
 
     st = setInterval ->
       if(linksCount == (okCount + failCount))

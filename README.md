@@ -38,6 +38,18 @@ grunt.initConfig({
 
 ### Options
 
+#### options.toFile
+- Type : `boolean`
+- Default value : false
+
+If this is true, broken link list is printed to the file. watch file 'deadlink.log'. It will locate in same directory with Gruntfile.js
+
+#### options.logAll
+- Type : `boolean`
+- Default value : false
+
+If this is true, living link (non-broken) is logged. It can used with `options.toFile`
+
 #### target.src
 - `Required`
 - Type : `String/Array`
@@ -45,9 +57,8 @@ grunt.initConfig({
 grunt file expand syntax.i It indicate files that include links for testing it is dead or not.
 
 #### target.expressions
-- `Optional`
 - Type: `Array of RegExp object`
-- Default value: [ /\[[^\]]*\]\((http[s]?:\/\/[^\) ]+)/g, /\[[^\]]*\]\s*:\s*(http[s]?:\/\/.*)/g ]
+- Default value : [ /\[[^\]]*\]\((http[s]?:\/\/[^\) ]+)/g, /\[[^\]]*\]\s*:\s*(http[s]?:\/\/.*)/g ]
 
 regular expression to recognize a link. default is markdown. It has high priority then options.
 
