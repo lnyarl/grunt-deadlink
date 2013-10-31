@@ -1,8 +1,8 @@
 ###
   grunt-deadlink
-  https://github.com/mage/grunt-deadlink
+  https://github.com/lnyarl/grunt-deadlink
 
-  Copyright (c) +2013 makdoc
+  Copyright (c) +2013 choi yongjae
   Licensed under the MIT license.
 ###
 
@@ -14,17 +14,25 @@ module.exports = (grunt) ->
   logger = (require './logger')(grunt)
   _ = grunt.util._
 
-  grunt.registerMultiTask 'grunt-deadlink', 'check dead links in files.', ->
+  grunt.registerMultiTask 'deadlink', 'check dead links in files.', ->
     done = @async()
 
     options = @options
       # this expression can changed to recognizing other url format.
       # eg. markdown, wiki syntax, html
       # markdown is default
-      expressions: [
-        /\[[^\]]*\]\((http[s]?:\/\/[^\) ]+)/g, #[...](<url>)
-        /\[[^\]]*\]\s*:\s*(http[s]?:\/\/.*)/g  #[...]: <url>
-      ]
+      filter: (content)->
+        expressions = [
+          /\[[^\]]*\]\((http[s]?:\/\/[^\) ]+)/g, #[...](<url>)
+          /\[[^\]]*\]\s*:\s*(http[s]?:\/\/.*)/g  #[...]: <url>
+        ]
+        result = []
+        _.forEach expressions, (expression) ->
+          match = expression.exec content
+          while(match?)
+            result.push match[1]
+            match = expression.exec content
+        result
       maxAttempts : 3
       retryDelay : 10000
       toFile : false
@@ -44,7 +52,7 @@ module.exports = (grunt) ->
         followRedirect : true
         pool :
           maxSockets : 10
-        timeout: 100000
+        timeout: 60000
 
       time = if retryCount? then 0 else options.retryDelay
       setTimeout ->
@@ -66,7 +74,8 @@ module.exports = (grunt) ->
     _.forEach files, (filepath) ->
 
       content = grunt.file.read(filepath)
-      links = util.searchAllLink(expressions, content)
+
+      links = if typeof options.filter == 'function' then options.filter(content) else util.searchAllLink(options.filter, content)
       linksCount += links.length
 
       _.forEach links, (link) ->

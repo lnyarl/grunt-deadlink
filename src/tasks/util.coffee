@@ -4,6 +4,7 @@ module.exports = (grunt) ->
   searchAllLink : (expressions, content) ->
     result = []
     _.forEach expressions, (expression) ->
+      expression = new RegExp(expression) if !(expression instanceof RegExp)
       match = expression.exec content
       while(match?)
         result.push match[1]
