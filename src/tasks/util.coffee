@@ -10,3 +10,14 @@ module.exports = (grunt) ->
         result.push match[1]
         match = expression.exec content
     result
+
+  extractURL : (files, filter, map)->
+    _.forEach files, (filepath) ->
+      content = grunt.file.read filepath
+      links = if _.isFunction filter
+        filter content
+      else
+        @searchAllLink filter, content
+
+      _.forEach links, (link) ->
+        map filepath, link

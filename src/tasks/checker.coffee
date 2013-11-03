@@ -11,7 +11,6 @@ module.exports = (grunt) ->
       @logger = logger
 
     isAllowedStatusCode : (code) ->
-      code = parseInt code
       ([200].indexOf code) >= 0
 
     isRetryCode : (code) ->

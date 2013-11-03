@@ -24,35 +24,20 @@ module.exports = (grunt) ->
           /\[[^\]]*\]\((http[s]?:\/\/[^\) ]+)/g, #[...](<url>)
           /\[[^\]]*\]\s*:\s*(http[s]?:\/\/.*)/g  #[...]: <url>
         ]
-        result = []
-        _.forEach expressions, (expression) ->
-          match = expression.exec content
-          while(match?)
-            result.push match[1]
-            match = expression.exec content
-        result
+        util.searchAllLink expressions, content
       maxAttempts : 3
       retryDelay : 10000
       logToFile : false
       logFilename: 'deadlink.log'
       logAll : false
 
-    logger = new Logger options
     files = grunt.file.expand @data.src
     filter = @data.filter || options.filter
+    logger = new Logger options
     checker = new Checker options, logger
 
-    # getting url
-    _.forEach files, (filepath) ->
-      content = grunt.file.read filepath
-      links = if _.isFunction filter
-        filter content
-      else
-        util.searchAllLink filter, content
-
-      logger.addLinkCount links.length
-
-      _.forEach links, (link) ->
+    util.extractURL files, filter, (filepath, link) ->
+        logger.increaseLinkCount()
         checker.checkDeadlink filepath, link
 
     logger.printResult done

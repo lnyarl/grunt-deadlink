@@ -28,8 +28,8 @@ module.exports = (grunt) ->
       @errorLogger msg
 
     # I don't like this method
-    addLinkCount : (count)->
-      @linkCount += count
+    increaseLinkCount : ()->
+      @linkCount++
 
     printResult: (after)->
       st = setInterval =>
