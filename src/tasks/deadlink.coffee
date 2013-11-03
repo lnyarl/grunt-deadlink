@@ -7,11 +7,9 @@
 ###
 
 module.exports = (grunt) ->
-
-  request = require 'request'
-  parseURL = (require 'url').parse
   util = (require './util')(grunt)
   Logger = (require './logger')(grunt)
+  Checker = (require './checker')(grunt)
   _ = grunt.util._
 
   grunt.registerMultiTask 'deadlink', 'check dead links in files.', ->
@@ -40,45 +38,21 @@ module.exports = (grunt) ->
       logAll : false
 
     logger = new Logger options
-    files = util.getFileList @data.src
+    files = grunt.file.expand @data.src
     filter = @data.filter || options.filter
-    allowedStatusCode = 200
-
-    checkDeadlink = (filepath, link, retryCount) ->
-      requestOption =
-        method : 'GET'
-        url : parseURL link
-        strictSSL : false
-        followRedirect : true
-        pool :
-          maxSockets : 10
-        timeout: 60000
-
-      retryDelay = if retryCount? then 0 else options.retryDelay
-      setTimeout ->
-        request requestOption, (error, res, body) ->
-          if(res? and res.statusCode == allowedStatusCode)
-            logger.ok "ok: #{link} at #{filepath}"
-          else if(error? and (error.code == "ETIMEOUT" or error.code == "ECONNREFUSED" or error.code == "HPE_INVALID_CONSTANT") and retryCount < options.maxAttempts)
-            logger.error "retry: #{link} (#{retryCount}) at #{filepath}"
-            run filepath, link, retryCount
-          else
-            msg = if error then JSON.stringify error else res.statusCode
-            logger.error "broken: #{link} (#{msg}) at #{filepath}"
-        .setMaxListeners 25
-      , retryDelay
+    checker = new Checker options, logger
 
     # getting url
     _.forEach files, (filepath) ->
       content = grunt.file.read filepath
-      links = if typeof options.filter == 'function' 
-        options.filter content
+      links = if _.isFunction filter
+        filter content
       else
-        util.searchAllLink options.filter, content
+        util.searchAllLink filter, content
 
       logger.addLinkCount links.length
 
       _.forEach links, (link) ->
-        checkDeadlink filepath, link, 0
+        checker.checkDeadlink filepath, link
 
     logger.printResult done

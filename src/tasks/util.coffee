@@ -4,16 +4,9 @@ module.exports = (grunt) ->
   searchAllLink : (expressions, content) ->
     result = []
     _.forEach expressions, (expression) ->
-      expression = new RegExp(expression) if !(expression instanceof RegExp)
+      (grunt.log.fatal "filter's type must be RegExp or function") if !(_.isRegExp expression)
       match = expression.exec content
       while(match?)
         result.push match[1]
         match = expression.exec content
     result
-
-  getFileList : (src) ->
-    src = [src] if(_(src).isString())
-    files = []
-    _.forEach src, (srcItem) ->
-      files = files.concat(grunt.file.expand srcItem)
-    files
