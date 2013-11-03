@@ -36,6 +36,7 @@ module.exports = (grunt) ->
     logger = new Logger options
     checker = new Checker options, logger
 
+    logger.progress()
     util.extractURL files, filter, (filepath, link) ->
         logger.increaseLinkCount()
         checker.checkDeadlink filepath, link

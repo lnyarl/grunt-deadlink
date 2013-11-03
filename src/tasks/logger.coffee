@@ -9,6 +9,7 @@ module.exports = (grunt) ->
     failCount : 0
     passCount : 0
     logFilename : "deadlink.log"
+    progressBar : null
 
     constructor : ({logToFile, logAll, logFilename}) ->
       @logFilename = logFilename if logFilename?
@@ -23,19 +24,32 @@ module.exports = (grunt) ->
 
     pass : (msg)->
       @passCount++
+      @progressBar.tick() if @progressBar?
       @passLogger msg
 
     ok : (msg)->
       @okCount++
+      @progressBar.tick() if @progressBar?
       @okLogger msg
 
     error : (msg)->
       @failCount++
+      @progressBar.tick() if @progressBar?
       @errorLogger msg
+
+    progress : ()->
+      return if grunt.option('verbose')
+      ProgressBar = require('progress')
+      @progressBar = new ProgressBar '[:bar]:percent :elapsed',
+        total: 0
+        complete: '#'
+        incomplete: ' '
+        width: 40
 
     # I don't like this method
     increaseLinkCount : ()->
       @linkCount++
+      @progressBar.total = @linkCount if @progressBar?
 
     printResult: (after)->
       st = setInterval =>
