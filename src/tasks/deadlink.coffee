@@ -11,7 +11,7 @@ module.exports = (grunt) ->
   request = require 'request'
   parseURL = (require 'url').parse
   util = (require './util')(grunt)
-  logger = (require './logger')(grunt)
+  Logger = (require './logger')(grunt)
   _ = grunt.util._
 
   grunt.registerMultiTask 'deadlink', 'check dead links in files.', ->
@@ -35,17 +35,17 @@ module.exports = (grunt) ->
         result
       maxAttempts : 3
       retryDelay : 10000
-      toFile : false
+      logToFile : false
+      logFilename: 'deadlink.log'
       logAll : false
 
-    logger.init options.toFile, options.logAll
+    logger = new Logger options
     files = util.getFileList @data.src
-    expressions = @data.expressions || options.expressions
-    linksCount = okCount = failCount = 0
-    allowdStatusCode = 200
+    filter = @data.filter || options.filter
+    allowedStatusCode = 200
 
-    run = (filepath, link, retryCount) ->
-      option =
+    checkDeadlink = (filepath, link, retryCount) ->
+      requestOption =
         method : 'GET'
         url : parseURL link
         strictSSL : false
@@ -54,36 +54,31 @@ module.exports = (grunt) ->
           maxSockets : 10
         timeout: 60000
 
-      time = if retryCount? then 0 else options.retryDelay
+      retryDelay = if retryCount? then 0 else options.retryDelay
       setTimeout ->
-        request option, (error, res, body) ->
-          if(res? and res.statusCode == allowdStatusCode) # allowdStatusCode = 200
-            okCount++
+        request requestOption, (error, res, body) ->
+          if(res? and res.statusCode == allowedStatusCode)
             logger.ok "ok: #{link} at #{filepath}"
-          else if(error? and (error.code == "ECONNREFUSED" or error.code == "HPE_INVALID_CONSTANT") and retryCount < options.maxAttempts)
+          else if(error? and (error.code == "ETIMEOUT" or error.code == "ECONNREFUSED" or error.code == "HPE_INVALID_CONSTANT") and retryCount < options.maxAttempts)
             logger.error "retry: #{link} (#{retryCount}) at #{filepath}"
-            retryCount++
             run filepath, link, retryCount
           else
-            failCount++
-            msg = if error then JSON.stringify error else (""+res.statusCode)
+            msg = if error then JSON.stringify error else res.statusCode
             logger.error "broken: #{link} (#{msg}) at #{filepath}"
         .setMaxListeners 25
-      , time
+      , retryDelay
 
+    # getting url
     _.forEach files, (filepath) ->
+      content = grunt.file.read filepath
+      links = if typeof options.filter == 'function' 
+        options.filter content
+      else
+        util.searchAllLink options.filter, content
 
-      content = grunt.file.read(filepath)
-
-      links = if typeof options.filter == 'function' then options.filter(content) else util.searchAllLink(options.filter, content)
-      linksCount += links.length
+      logger.addLinkCount links.length
 
       _.forEach links, (link) ->
-        run filepath, link, 0
+        checkDeadlink filepath, link, 0
 
-    st = setInterval ->
-      if(linksCount == (okCount + failCount))
-        grunt.log.ok "ok : #{okCount} ,fail #{failCount}"
-        clearInterval st
-        done()
-    , 500
+    logger.printResult done
