@@ -7,17 +7,23 @@ module.exports = (grunt) ->
     linkCount : 0
     okCount : 0
     failCount : 0
+    passCount : 0
     logFilename : "deadlink.log"
 
     constructor : ({logToFile, logAll, logFilename}) ->
       @logFilename = logFilename if logFilename?
       if logToFile
-        @resultLogger = @errorLogger = @okLogger = (msg) -> fs.appendFile @logFilename, msg + lineSeparator, (err)->
+        @passCount = @resultLogger = @errorLogger = @okLogger = (msg) -> fs.appendFile @logFilename, msg + lineSeparator, (err)->
       if not logAll then @okLogger = (str)->
 
-    okLogger : grunt.log.ok
-    errorLogger : grunt.log.error
+    okLogger : grunt.verbose.ok
+    errorLogger : grunt.verbose.error
     resultLogger : grunt.log.subhead
+    passLogger : grunt.verbose.writeln
+
+    pass : (msg)->
+      @passCount++
+      @passLogger msg
 
     ok : (msg)->
       @okCount++
@@ -33,8 +39,8 @@ module.exports = (grunt) ->
 
     printResult: (after)->
       st = setInterval =>
-        if(@linkCount == (@okCount + @failCount))
-          @resultLogger "ok : #{@okCount}, error : #{@failCount}"
+        if(@linkCount == (@okCount + @failCount + @passCount))
+          @resultLogger "ok : #{@okCount}, error : #{@failCount}, pass : #{@passCount}"
           clearInterval st
           after()
       , 500
