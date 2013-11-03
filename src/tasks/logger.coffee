@@ -20,7 +20,7 @@ module.exports = (grunt) ->
     okLogger : grunt.verbose.ok
     errorLogger : grunt.verbose.error
     resultLogger : grunt.log.subhead
-    passLogger : grunt.verbose.writeln
+    passLogger : grunt.verbose.ok
 
     pass : (msg)->
       @passCount++
