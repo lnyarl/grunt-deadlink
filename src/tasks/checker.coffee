@@ -1,6 +1,7 @@
 module.exports = (grunt) ->
   parseURL = (require 'url').parse
   request = require 'request'
+  fs = require 'fs'
 
   class Checker
     logger : null
@@ -12,18 +13,13 @@ module.exports = (grunt) ->
       @maxAttempts = maxAttempts
       @logger = logger
 
-    isAllowedStatusCode : (code) ->
+    isAllowedStatusCode : (code)->
       ([200].indexOf code) >= 0
 
-    isRetryCode : (code) ->
+    isRetryCode : (code)->
       (["ETIMEOUT",  "ECONNREFUSED", "HPE_INVALID_CONSTANT"].indexOf code) >= 0
 
-    checkDeadlink : (filepath, link, retryCount = 0) ->
-      if @checkCache[link]? and retryCount == 0
-        @logger.pass "pass: #{link} in '#{filepath}' is tried at #{@checkCache[link]}"
-        return
-      @checkCache[link] = filepath
-
+    checkHTTPLink : (filepath, link, retryCount = 0)->
       requestOption =
         method : 'GET'
         url : parseURL link
@@ -42,7 +38,7 @@ module.exports = (grunt) ->
             @checkStatus[link] = "ok"
           else if error? and @isRetryCode error.code and retryCount < @maxAttempts
             @logger.error "retry: #{link} (#{retryCount}) at '#{filepath}'"
-            @checkDeadlink filepath, link, retryCount
+            @checkHTTPLink filepath, link, retryCount
           else
             msg = if error then JSON.stringify error else res.statusCode
             @logger.error "broken: #{link} (#{msg}) at '#{filepath}'"
@@ -50,4 +46,27 @@ module.exports = (grunt) ->
         .setMaxListeners 25
       , retryDelay
 
+    checkLocalLink : (filepath, link)->
+      fs.exists link, (exist)=>
+        if exist
+          @logger.ok "ok: #{link} at '#{filepath}'"
+          @checkStatus[link] = "ok"
+        else
+          @logger.error "broken: #{link} at '#{filepath}'"
+          @checkStatus[link] = "fail"
+
+    isURL : (link)->
+      /^ *https?:\/\/?/.test link
+
+
+    checkDeadlink : (filepath, link) ->
+      if @checkCache[link]?
+        @logger.pass "pass: #{link} in '#{filepath}' is tried at #{@checkCache[link]}"
+        return
+      @checkCache[link] = filepath
+
+      if @isURL link
+        @checkHTTPLink filepath, link
+      else
+        @checkLocalLink filepath, link
   Checker

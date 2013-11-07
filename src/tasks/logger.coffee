@@ -15,7 +15,9 @@ module.exports = (grunt) ->
       @logFilename = logFilename if logFilename?
       if logToFile
         @passCount = @resultLogger = @errorLogger = @okLogger = (msg) -> fs.appendFile @logFilename, msg + lineSeparator, (err)->
-      if not logAll then @okLogger = (str)->
+      if not logAll
+        @okLogger = (str)->
+        @passLogger = (str)->
 
     okLogger : grunt.verbose.ok
     errorLogger : grunt.verbose.error

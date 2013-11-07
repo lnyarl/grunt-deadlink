@@ -22,11 +22,15 @@ module.exports = (grunt) ->
       filter: (content)->
         expressions = [
           /\[[^\]]*\]\((http[s]?:\/\/[^\) ]+)/g, #[...](<url>)
-          /\[[^\]]*\]\s*:\s*(http[s]?:\/\/.*)/g  #[...]: <url>
+          /\[[^\]]*\]\s*:\s*(http[s]?:\/\/.*)/g,  #[...]: <url>
+
+          #/\[[^\]]*\]\((http[s]?:\/\/[^\) ]+)/g, #[...](<url>)
+          #/\[[^\]]*\]\s*:\s*(http[s]?:\/\/.*)/g,  #[...]: <url>
+          #/((\.?\.?\/?[a-zA-Z\.\-_])+)/g
         ]
         util.searchAllLink expressions, content
       maxAttempts : 3
-      retryDelay : 10000
+      retryDelay : 60000
       logToFile : false
       logFilename: 'deadlink.log'
       logAll : false
