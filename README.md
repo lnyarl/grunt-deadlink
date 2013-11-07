@@ -21,16 +21,31 @@ grunt.loadNpmTasks('grunt-deadlink');
 
 ### Overview
 In your project's Gruntfile, add a section named `deadlink` to the data object passed into `grunt.initConfig()`.
+For example, check out below code.
 
 ```js
 grunt.initConfig({
   deadlink: {
     options: {
-      expressions: [...] // regular expression to take a link. default is markdown.
+      filter: function(content) { // `function` or `regular expressions` to take a link. default is markdown.
+          var expressions = [
+            /\[[^\]]*\]\((http[s]?:\/\/[^\) ]+)/g,  //[...](<url>)
+            /\[[^\]]*\]\s*:\s*(http[s]?:\/\/.*)/g,  //[...]: <url>
+          ];
+          var result = [];
+          _.forEach(expressions, function(expression) {
+            var match = expression.exec(content);
+            while(match != null) {
+              result.push(match[1]);
+              match = expression.exec(content);
+            }
+          });
+          return result; // Return array of link. 
+      }
     },
     your_target: {
-      src: [...]         // grunt file expand syntax. files path for testing.
-      expressions: [...] // regular expression to recognize a link. default is markdown. It has high priority then options.
+      src: [ "doc/**/*.md", "!doc/layout/*.md" ]         // glob pattern. files path that include links to checking.
+      filter: [...] // It has high priority then `options`.
     },
   },
 })
@@ -38,29 +53,48 @@ grunt.initConfig({
 
 ### Options
 
-#### options.toFile
+#### options.logToFile
 - Type : `boolean`
 - Default value : false
 
-If this is true, broken link list is printed to the file. watch file 'deadlink.log'. It will locate in same directory with Gruntfile.js
+If this is true, Test report is printed to the file. Default file name to watch is 'deadlink.log'.
+It will locate in same directory with Gruntfile.js. If you change file path or name, look at `options.logFilename`
+
+> Note that to enable logging, grunt should be run in verbose mode.
 
 #### options.logAll
 - Type : `boolean`
 - Default value : false
 
-If this is true, living link (non-broken) is logged. It can used with `options.toFile`
+If this is true, non-broken link is logged. It can used with `options.logToFile`
+
+#### options.logFilename
+- Type : `String`
+- Default value : 'deadlink.log'
+
+If this is true, non-broken link is logged. It can used with `options.logToFile`
+
+#### options.filter
+- `Required`
+- Type : `Function` or `Array of RegExp object`
+
+regular expression to recognize a link. default is markdown.
+
+If this is function, it get a **content** as argument and return **array of link**. So you should extract **links** in **contnet** within filter funciton.
+
+If this is array of RegExp, first submatch string must be *link* to test. For example, markdown can match with `/\[[^\]]*\]\((http[s]?:\/\/[^\) ]+)/g`. To take all html link, regular expression may this form - `/(http[s]?:\/\/[^ ]+)/g`, not this - `/http[s]?:\/\/[^ ]+/g`
 
 #### target.src
 - `Required`
-- Type : `String/Array`
+- Type : `String` or `Array`
 
-grunt file expand syntax.i It indicate files that include links for testing it is dead or not.
+[Glob pattern](https://github.com/isaacs/node-glob#usage) to indicate files that include links for testing it is dead or not.
 
-#### target.expressions
-- Type: `Array of RegExp object`
-- Default value : [ /\[[^\]]*\]\((http[s]?:\/\/[^\) ]+)/g, /\[[^\]]*\]\s*:\s*(http[s]?:\/\/.*)/g ]
+#### target.filter
+- `Required`
+- Type : `Function` or `Array of RegExp object`
 
-regular expression to recognize a link. default is markdown. It has high priority then options.
+Check out `options.filter`. It has high priority then options.
 
 
 ## Contributing
