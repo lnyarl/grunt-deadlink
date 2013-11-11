@@ -75,8 +75,8 @@ If this is true, non-broken link is logged. It can used with `options.logToFile`
 If this is true, non-broken link is logged. It can used with `options.logToFile`
 
 #### options.filter
-- `Required`
 - Type : `Function` or `Array of RegExp object`
+- Default value : regular expression for markdown link form
 
 regular expression to recognize a link. default is markdown.
 
@@ -91,8 +91,8 @@ If this is array of RegExp, first submatch string must be *link* to test. For ex
 [Glob pattern](https://github.com/isaacs/node-glob#usage) to indicate files that include links for testing it is dead or not.
 
 #### target.filter
-- `Required`
 - Type : `Function` or `Array of RegExp object`
+- Default value : options.filter
 
 Check out `options.filter`. It has high priority then options.
 
