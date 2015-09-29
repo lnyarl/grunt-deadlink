@@ -14,6 +14,9 @@ module.exports = (grunt) ->
 
   grunt.registerMultiTask 'deadlink', 'check dead links in files.', ->
     done = @async()
+    fail = (failCount) ->
+      grunt.fail.warn("Found #{failCount} dead links")
+      @async()
 
     options = @options
       # this expression can changed to recognizing other url format.
@@ -45,4 +48,4 @@ module.exports = (grunt) ->
         logger.increaseLinkCount()
         checker.checkDeadlink filepath, link
 
-    logger.printResult done
+    logger.printResult done, fail
