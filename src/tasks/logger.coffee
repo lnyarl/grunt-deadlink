@@ -53,12 +53,15 @@ module.exports = (grunt) ->
       @linkCount++
       @progressBar.total = @linkCount if @progressBar?
 
-    printResult: (after)->
+    printResult: (onSuccess, onFail)->
       st = setInterval =>
         if(@linkCount == (@okCount + @failCount + @passCount))
           @resultLogger "ok : #{@okCount}, error : #{@failCount}, pass : #{@passCount}"
           clearInterval st
-          after()
+          if @failCount == 0
+            onSuccess()
+          else
+            onFail(@failCount)
       , 500
 
   Logger
