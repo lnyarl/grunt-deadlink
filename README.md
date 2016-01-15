@@ -33,7 +33,7 @@ grunt.initConfig({
             /\[[^\]]*\]\s*:\s*(http[s]?:\/\/.*)/g,  //[...]: <url>
           ];
           var result = [];
-          _.forEach(expressions, function(expression) {
+          expressions.forEach(expression => {
             var match = expression.exec(content);
             while(match != null) {
               result.push(match[1]);
