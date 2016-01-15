@@ -53,6 +53,18 @@ grunt.initConfig({
 
 ### Options
 
+#### options.retryDelay
+- Type : `int`
+- Default value: 60000
+
+This allows you to define the retry delay in ms.
+
+#### options.maxAttempts
+- Type : `int`
+- Default: 3
+
+This allows you to set how many times attempts should be made before a deadlink will be reported.
+
 #### options.logToFile
 - Type : `boolean`
 - Default value : false
