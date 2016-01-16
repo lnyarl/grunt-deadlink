@@ -14,7 +14,7 @@ module.exports = (grunt) ->
     constructor : ({logToFile, logAll, logFilename}) ->
       @logFilename = logFilename if logFilename?
       if logToFile
-        @passCount = @resultLogger = @errorLogger = @okLogger = (msg) -> fs.appendFile @logFilename, msg + lineSeparator, (err)->
+        @passLogger = @resultLogger = @errorLogger = @okLogger = (msg) -> fs.appendFile @logFilename, msg + lineSeparator, (err)->
       if not logAll
         @okLogger = (str)->
         @passLogger = (str)->
